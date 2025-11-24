@@ -1,47 +1,50 @@
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
+ 
+
 import streamlit as st
-import numpy as np
-import tensorflow as tf
 from PIL import Image
+import requests
+
 from components import show_header, show_footer, back_to_dashboard_button
 
-# Page config
-st.set_page_config(page_title="Pneumonia Detection", page_icon="🫁")
+API_URL = "http://localhost:8000/predict"  # change if your API is elsewhere
 
-# Header
+st.set_page_config(page_title="Pneumonia Detection", page_icon="🫁")
 show_header()
 st.title("Pneumonia Detection")
-st.write("Upload a chest X-ray image and the AI will predict if Pneumonia is present.")
+st.write("Upload a chest X-ray and the API will tell you if Pneumonia is present.")
 
-# Load model
-@st.cache_resource
-def load_model():
-    model = tf.keras.models.load_model("pneumonia_model_custom.h5")
-    return model
+uploaded_file = st.file_uploader("Upload Chest X-ray (jpg/png)", type=["jpg","jpeg","png"])
 
-model = load_model()
+if uploaded_file:
+    img = Image.open(uploaded_file).convert("RGB")
+    st.image(img, use_column_width=True, caption="Uploaded Image")
 
-# File uploader
-uploaded_file = st.file_uploader("Upload Chest X-ray Image (jpg/png)", type=["jpg", "jpeg", "png"])
+    # send image bytes to API
+    uploaded_file.seek(0)
+    files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "image/jpeg")}
 
-if uploaded_file is not None:
-    image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    with st.spinner("Predicting..."):
+        try:
+            resp = requests.post(API_URL, files=files, timeout=20)
+            resp.raise_for_status()
+            data = resp.json()
+        except Exception as e:
+            st.error(f"API error: {e}")
+        else:
+            prob = data.get("probability")
+            label = data.get("label", "").lower()
+            if prob is not None:
+                st.write(f"Probability: **{prob:.3f}**")
+            if "pneu" in label:
+                st.error("Pneumonia Detected 😷")
+            else:
+                st.success("Normal Lungs 🫶")
 
-    # Preprocess image
-    resized = image.resize((150,150))
-    img_array = np.expand_dims(np.array(resized)/255.0, axis=0)
-
-    # Prediction
-    prediction = model.predict(img_array)[0][0]
-    if prediction > 0.8:
-        st.error("Pneumonia Detected 😷")
-    else:
-        st.success("Normal Lungs 🫶")
-
-# Back to dashboard button
 back_to_dashboard_button("pages/patient_dashboard.py")
 show_footer()
+
+ 
  
