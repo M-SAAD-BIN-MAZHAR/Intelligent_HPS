@@ -1,0 +1,9 @@
+export { LandingPage } from './LandingPage';
+export { LoginPage } from './LoginPage';
+export { RegisterPage } from './RegisterPage';
+export { PatientDashboard } from './PatientDashboard';
+export { DoctorDashboard } from './DoctorDashboard';
+export { HealthPrediction } from './HealthPrediction';
+export { PneumoniaDetection } from './PneumoniaDetection';
+export { DepressionAssessment } from './DepressionAssessment';
+export { MedicalChatbot } from './MedicalChatbot';

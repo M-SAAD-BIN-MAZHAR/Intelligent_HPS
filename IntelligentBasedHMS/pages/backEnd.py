@@ -13,7 +13,13 @@ from dotenv import load_dotenv
  
 import sqlite3
 from langchain_huggingface import HuggingFaceEmbeddings,ChatHuggingFace,HuggingFaceEndpoint
-from VECTOR import get_docsearch
+try:
+    from .VECTOR import get_docsearch
+except (ImportError, ValueError):
+    try:
+        from pages.VECTOR import get_docsearch
+    except ImportError:
+        from VECTOR import get_docsearch
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.prompts import ChatPromptTemplate
